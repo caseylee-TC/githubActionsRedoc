@@ -5,14 +5,19 @@ info:
   description: Our free API tells you when the sun rises and sets anywhere on Earth, plus **twilight**, **golden hour**, **solar position** and **moon data**. All you need is a **latitude** and **longitude**; you make a simple GET request and get the answer as JSON.<br /><br />Time come in the local timezone of the place, and you can ask for a single day or up to a whole year in one request.<br /><br />The API is **free to use**; no sign up or API key required.
   termsOfService: https://sunrise-sunset.org/
   version: 'Version 2'
+  license:
+    name: MIT
 #The server object to include the URLs to the production server of the API.
 servers:
   - url: https://api.sunrise-sunset.org
     description: Version 2
+#The API is free to use and requires no API key or authentication.
+security: []
 #The `paths` object holds the relative paths to the individual endpoints and their operations. The path is appended to the URL from the Server Object in order to construct the full URL to query the API. There is only one operation for this API.
 paths: 
   /v2:
     get:
+      summary: Get sunrise, sunset, twilight, and moon data for a location
       description: Returns when the sun rises and sets anywhere on Earth, plus twilight, golden hour, solar position and moon data.
       operationId: getSunriseSunset
       parameters:
@@ -342,8 +347,7 @@ components:
             error: too many requests too quickly
             message: "slow down"
             docs: https://sunrise-sunset.org/api#rate-limits
-#The externalDocs object is for a single link of external documentation or reference that might be relevant to the API. Here is it used as attribution as required by the [API](https://sunrise-sunset.org/api)
+#The externalDocs object is for a single link of external documentation or reference that might be relevant to the API. Here it is used as attribution as required by the [API](https://sunrise-sunset.org/api)
 externalDocs: 
   description: https://sunrise-sunset.org/api
   url: https://sunrise-sunset.org/api
-
