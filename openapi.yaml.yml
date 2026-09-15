@@ -1,0 +1,349 @@
+openapi: 3.2.0
+#The info object gives metadata and a good place to insert introductions about the API. The `title` and `version` fields are required. The `description` adds more information written in Markdown, and the `termsOfService` field attributes to the website as required by the API provider.
+info:
+  title: Sunset and sunrise times API
+  description: Our free API tells you when the sun rises and sets anywhere on Earth, plus **twilight**, **golden hour**, **solar position** and **moon data**. All you need is a **latitude** and **longitude**; you make a simple GET request and get the answer as JSON.<br /><br />Time come in the local timezone of the place, and you can ask for a single day or up to a whole year in one request.<br /><br />The API is **free to use**; no sign up or API key required.
+  termsOfService: https://sunrise-sunset.org/
+  version: 'Version 2'
+#The server object to include the URLs to the production server of the API.
+servers:
+  - url: https://api.sunrise-sunset.org
+    description: Version 2
+#The `paths` object holds the relative paths to the individual endpoints and their operations. The path is appended to the URL from the Server Object in order to construct the full URL to query the API. There is only one operation for this API.
+paths: 
+  /v2:
+    get:
+      description: Returns when the sun rises and sets anywhere on Earth, plus twilight, golden hour, solar position and moon data.
+      operationId: getSunriseSunset
+      parameters:
+        - name: lat
+          in: query
+          description: Latitude in decimal degrees, -90 to 90.
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          example: 36.7201600
+        - name: lng
+          in: query
+          description: Longitude in decimal degrees, -180 to 180.
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          example: 4.4203400
+        - name: date
+          in: query
+          description: Date in `YYYY-MM-DD` format, `today` or `tomorrow`. Defaults to today in the local timezone of the coordinates.
+          required: false
+          schema:
+            type: string
+          example: tomorrow
+        - name: date_start
+          in: query
+          description: Start date in `YYYY-MM-DD` format, paired with `date_end`, the requested date range cannot exceed 366 days in a single request. You can request days up to a full year in the same location once instead of one request per day.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: date_end
+          in: query
+          description: End date in `YYYY-MM-DD` format, paired with `date_start`, the requested date range cannot exceed 366 days in a single request. You can request days up to a full year in the same location once instead of one request per day.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-12-31"
+        - name: tz
+          in: query
+          description: Timezone of the location. You usually don't need this as the default time comes in the location's time zone. Set it if only you want the times expressed in a different time zone, using a [standard time zone name](https://www.php.net/manual/en/timezones.php), such as `Europe/Madrid` or `America/Los_Angeles` (abbreviations like `PST` are rejected).<br /><br />Coordinates in international waters resolves to nautical `etc/GMT` zones.
+          required: false
+          schema:
+              type: string
+              example: Europe/Madrid
+        - name: time_format
+          in: query
+          description: The time format of events. By default, the response would be in `iso8601`, but you can use `unix`. If `unix`, all event times are Unix epoch seconds (UTC by definition, handy for embedded clients). `tzid/utc_offset` are still included as context in the response, and the `date`/`tz` parameters still determine which local calendar day is computed. Events that do not occur stay `null`.
+          required: false
+          schema:
+              type: string
+              enum:
+                - iso8601
+                - unix
+              default: iso8601
+              example: iso8601
+#The Responses object is a container for the expected responses of an operation. The container maps a HTTP response code to the expected response.
+      responses:
+          200:
+            description: Successful response
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SunMoonResponse'
+          400:
+            $ref: '#/components/responses/BadRequest'
+          404:
+            $ref: '#/components/responses/NotFound'
+          429:
+            $ref: '#/components/responses/TooManyRequests'
+#The components object holds a set of reusable objects for different aspects of the OAS. All objects defined within the Components Object will have no effect on the API unless they are explicitly referenced from outside the Components Object. For this API, there are two types of components; schemas for the responses and responses for the error responses.
+components:
+  schemas:
+    SunMoonResponse:
+      description: Successful response
+      type: object
+      properties:
+        sunrise:
+          type: 
+            - string
+            - "null"
+          description: time when the upper edge of the sun crosses the horizon for the first time in the day(center of the sun at −0.833°, accounting for atmospheric refraction). Unless `unix` is selected for `time_format`, all event time fields are returned as iso8601 date-time strings.
+          example: 2026-08-07T07:27:08+02:00
+        sunset:
+          type: 
+            - string
+            - "null"
+          description: time when the upper edge of the sun crosses the horizon for the second time in the day(center of the sun at −0.833°, accounting for atmospheric refraction). Unless `unix` is selected for `time_format`, all event time fields are returned as iso8601 date-time strings.
+          example: 2026-08-07T21:19:49+02:00
+        solar_noon:
+            type: string
+            description: time when the sun is at its apex.
+            example: 2026-08-07T14:23:28+02:00
+        day_length:
+          type: 
+            - integer
+            - "null"
+          description: seconds between sunrise and sunset
+          example: 49961
+        sun_status:
+          type: string
+          enum:
+            - normal
+            - midnight_sun
+            - polar_night
+          description: Indicates the sun behavior for the requested calendar day.`normal` is sunrise and sunset occur normally. `midnight_sun`is the sun never sets and remains above the horizon for the entire day (`day_length` is 86400 seconds).    `polar_night` is the sun never rises (`day_length` is 0).
+          example: normal
+        civil_twilight_begin:
+          type: string
+          description: time when the Sun is just below the horizon (reaches 6 degrees below the horizon) and there is enough light for most outdoor activities in the morning.
+          example: 2026-08-09T07:02:15+02:00
+        civil_twilight_end:
+          type: string
+          description: time when the Sun is just below the horizon (reaches 6 degrees below the horizon) and there is enough light for most outdoor activities in the evening.
+          example: 2026-08-09T21:44:10+02:00
+        nautical_twilight_begin:
+          type: string
+          description: time when the horizon is visible at sea (sun at −12°)
+          example: 2026-08-07T06:26:26+02:00
+        nautical_twilight_end:
+          type: string
+          description: time when the horizon is not visible visible at sea (sun at −12°)
+          example: 2026-08-07T22:20:30+02:00
+        astronomical_twilight_begin:
+          type: string
+          description: time when the Sun is between 12 and 18 degrees below the horizon. During this time, the sky is dark enough for astronomers to observe celestial objects without interference from the Sun's light.
+          example: 2026-08-09T05:52:33+02:00
+        astronomical_twilight_end:
+          type: string
+          description: time when the Sun is over 18 degrees below the horizon.
+          example: 2026-08-09T22:53:51+02:00
+        dawn:
+          type: string
+          description: time when it's bright enough to be outdoors without artificial light ([civil twilight](https://sunrise-sunset.org/glossary#CivilTwilight), sun at −6°). Same values as `civil_twilight_begin`.
+          example: 2026-08-07T07:00:27+02:00
+        dusk:
+          type: string
+          description: time when it's bright enough to be outdoors without artificial light ([civil twilight](https://sunrise-sunset.org/glossary#CivilTwilight), sun at −6°). Same values as `civil_twilight_end`.
+          example: 2026-08-07T21:46:29+02:00
+        first_light:
+          type: string
+          description: time when the very first hint of light in the sky. Time before `first_light` is fully dark ([astronomical twilight](https://sunrise-sunset.org/glossary#AstronomicalTwilight), sun at −18°). Same values as `astronomical_twilight_begin`.
+          example: 2026-08-07T05:50:09+02:00
+        last_light:
+          type: string
+          description: time when the very last hint of light in the sky. Time after `last_light` is fully dark ([astronomical twilight](https://sunrise-sunset.org/glossary#AstronomicalTwilight), sun at −18°). Same values as `astronomical_twilight_end`.
+          example: 2026-08-07T22:56:48+02:00
+        golden_hour:
+          type: object
+          description: time of the warm, soft light period in the morning (after sunrise) and in the evening (before sunset) (sun elevation between -4° and +6°).
+          properties:
+            morning:
+              type: object
+              properties:
+                begin:
+                  type: string
+                  format: date-time
+                  description: beginning time of golden hour in the morning
+                  example: 2026-08-07T07:11:11+02:00
+                end:
+                  type: string
+                  format: date-time
+                  description: ending time of golden hour in the morning
+                  example: 2026-08-07T08:04:20+02:00
+            evening:
+              type: object
+              properties:
+                begin:
+                  type: string
+                  format: date-time
+                  description: beginning time of golden hour in the evening
+                  example: 2026-08-07T20:42:10+02:00
+                end:
+                  type: string
+                  format: date-time
+                  description: ending time of golden hour in the evening
+                  example: 2026-08-07T21:35:11+02:00
+        blue_hour:
+          type: object
+          description: time when the sky is deep-blue just before dawn in the morning and just after dusk in the evening (sun between −6° and −4°, morning and evening).
+          properties: 
+            morning:
+              type: object
+              properties:
+                begin:
+                  type: string
+                  format: date-time
+                  description: beginning time of blue hour in the morning
+                  example: 2026-08-07T07:00:27+02:00
+                end:
+                  type: string
+                  format: date-time
+                  description: ending time of blue hour in the morning
+                  example: 2026-08-07T07:11:11+02:00
+            evening:
+              type: object
+              properties:
+                begin:
+                  type: string
+                  format: date-time
+                  description: beginning time of blue hour in the evening
+                  example: 2026-08-07T21:35:11+02:00
+                end:
+                  type: string
+                  format: date-time
+                  description: ending time of blue hour in the evening
+                  example: 2026-08-07T21:46:29+02:00
+        solar_position:
+          type: object
+          description: where the sun is in the sky. Azimuth is the compass direction (degrees from north, clockwise; 90 is east, 270 is west) at sunrise, sunset and solar noon; altitude is how high above the horizon it gets at solar noon.
+          properties:
+            sunrise_azimuth:
+              type: number
+              format: float
+              description: Compass direction of the sun at sunrise, measured in degrees clockwise from north.
+              example: 68.52
+            sunset_azimuth:
+              type: number
+              format: float
+              description: Compass direction of the sun at sunset, measured in degrees clockwise from north.
+              example: 291.35
+            solar_noon_azimuth:
+              type: number
+              format: float
+              description: Compass direction of the sun at solar noon, measured in degrees clockwise from north.
+              example: 179.99
+            solar_noon_altitude:
+              type: number
+              format: float
+              description: Height of the sun above the horizon at solar noon, measured in degrees.
+              example: 69.61
+        moonrise:
+          type: 
+            - string
+            - "null"
+          format: date-time
+          description: Time when the moon appears over the horizon, within that local calendar day. Roughly one day a month each event simply doesn't happen; then it's `null`.
+          example: 2026-08-07T01:27:00+02:00
+        moonset:
+          type: 
+            - string
+            - "null"
+          format: date-time
+          description: Time when the moon appears over the horizon, within that local calendar day. Roughly one day a month each event simply doesn't happen; then it's `null`.
+          example: 2026-08-07T16:47:30+02:00
+        moon_phase:
+          type: string
+          enum:
+            - New Moon
+            - Waxing Crescent
+            - First Quarter
+            - Waxing Gibbous
+            - Full Moon
+            - Waning Gibbous
+            - Last Quarter
+            - Waning Crescent
+          description: the phase name of the moon as evaluated at local noon time
+          example: Last Quarter
+        moon_illumination:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: how much of the moon looks lit, in percent as evaluated at local noon time
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - docs
+      properties:
+        error:
+          type: string
+          description: The error code.
+        message:
+          type: string
+          description: An explanation of the error and how to fix it.
+        docs:
+          type: string
+          format: uri
+          description: URL to documentation explaining the error.
+  responses:
+    BadRequest:
+      description: >
+        The request contains invalid input. The response explains what went wrong and how to fix it.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: invalid_tz
+            message: "Unknown tz 'PST'. Use IANA identifiers like 'America/Los_Angeles'."
+            docs: "https://sunrise-sunset.org/api#tz"
+    NotFound:
+      description: The requested API route was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: route not found
+            message: "404 Not Found"
+            docs: "https://sunrise-sunset.org/api"
+    TooManyRequests:
+      description: >
+        Too many requests. Wait the number of seconds specified by
+        the Retry-After header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying.
+          schema:
+            type: integer
+            format: int32
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: too many requests too quickly
+            message: "slow down"
+            docs: https://sunrise-sunset.org/api#rate-limits
+#The externalDocs object is for a single link of external documentation or reference that might be relevant to the API. Here is it used as attribution as required by the [API](https://sunrise-sunset.org/api)
+externalDocs: 
+  description: https://sunrise-sunset.org/api
+  url: https://sunrise-sunset.org/api
+

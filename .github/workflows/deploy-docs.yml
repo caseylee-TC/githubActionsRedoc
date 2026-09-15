@@ -1,0 +1,42 @@
+name: Deploy API Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'openapi.yaml'
+
+permissions:
+  contents: write # Required for publishing to the gh-pages branch
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Step 3: Create a directory for build output
+      - name: Prepare build directory
+        run: mkdir public
+
+      # Step 4: Build the static HTML documentation using Redocly CLI
+      # This command bundles your spec into a single static HTML file named index.html
+      - name: Build documentation HTML
+        run: npx @redocly/cli build-docs openapi.yaml -o public/index.html
+
+      # Step 5: Deploy the public folder to the gh-pages branch
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
