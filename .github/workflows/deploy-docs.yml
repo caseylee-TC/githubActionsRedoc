@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'openapi.yaml'
+      - 'openapi.yml'
 
 permissions:
   contents: write # Required for publishing to the gh-pages branch
