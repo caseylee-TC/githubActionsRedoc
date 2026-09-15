@@ -342,7 +342,7 @@ components:
             error: too many requests too quickly
             message: "slow down"
             docs: https://sunrise-sunset.org/api#rate-limits
-#The externalDocs object is for a single link of external documentation or reference that might be relevant to the API. Here is it used as attribution as required by the [API](https://sunrise-sunset.org/api)
+#The externalDocs object is for a single link of external documentation or reference that might be relevant to the API. Here it is used as attribution as required by the [API](https://sunrise-sunset.org/api)
 externalDocs: 
   description: https://sunrise-sunset.org/api
   url: https://sunrise-sunset.org/api
